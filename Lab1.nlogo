@@ -64,7 +64,22 @@ to go-once
 end
 
 
+;; Procedure with one argument to update the color of a child turtle.
 to update-color [child]
+    ;; ******* YOUR CODE GOES HERE ******** ;;
+    ;
+    ; Your code should calculate the distance from the center
+    ; of the playground. If the child (a turtle) is less than
+    ; max-pxcor + 0.5 away from the center, they are within the 
+    ; circle, and they should be colored blue. Otherwise, the children
+    ; are colored some other color of your choice.
+    ;
+    ; Use the NetLogo procedure distancexy for calculating distance. Use 
+    ; ifelse for checking if a child is within a circle. Use "set color blue",
+    ; for example, to set the color to blue. 
+    ; Search online for available colors if you don't want green for the
+    ; other color.
+    ;
     set color green
 end
 
