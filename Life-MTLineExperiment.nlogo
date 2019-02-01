@@ -1,111 +1,85 @@
-;;
-; COGS 122 Lab #1: "Schoolyard" calculation of π through geometry
-;
-; There are many interesting ways to approximate the digits of
-; π. The following geometrical algorithm is simple and aesthetically
-; pleasing. Plus we can conceptualize our process as being done by
-; children having fun running around a playground. This is nice for
-; us as we learn to think about computing and model social systems.
-;
-; The process to approximate pi goes like so:
-;
-;    1. Some school chidren get let out to play in their fenced-in
-;       square school yard with side length L. We assume the children
-;       run around randomly, turning up to 180 degrees and moving forward
-;       one full step on each timestep.
-;    2. At any timestep, count the number of students within a
-;       circle centered at the origin with radius equal to L.
-;    3. π is estimated by calculating 4 * (# children within L / # total children).
-;
-; This approximation for π comes from the fact that the number of children within L
-; is an approximation for the area of the circle, the total number of children is
-; an approximation of the area of the square. Dividing the area of the inscribed
-; circle by the area of the square and some algebra
-; gives π = 4 * (CircleArea / SquareArea).
-;
-; Author: Matthew A. Turner <mturner8@ucmerced.edu>
-; Date: 27 January 2019
-;
+patches-own [
+  living?         ;; indicates if the cell is living
+  live-neighbors  ;; counts how many neighboring cells are alive
+]
 
-to setup
+to setup-blank
+  clear-all
+  ask patches [ cell-death ]
+  reset-ticks
+end
 
+to setup-random
+  clear-all
+  ask patches
+    [ ifelse random-float 100.0 < initial-density
+      [ cell-birth ]
+      [ cell-death ] ]
+  reset-ticks
+end
+
+to setup-line
   clear-all
 
-  ;; Create desired number of turtles in the shape of
-  ;; persons who start from the bottom left corner of the
-  ;; simulation world.
-  create-turtles num-children [
+  let lower-ycor (- round(line-length / 2.0))
+  let upper-ycor (lower-ycor + line-length)
 
-    ;; Make the turtles people-shaped since we imagine
-    ;; them as children at recess.
-    setxy min-pxcor min-pycor
-    set shape "person"
-  ]
+  ask patches
+    [ ifelse (pxcor = 0 and lower-ycor <= pycor and pycor < upper-ycor)
+      [ cell-birth ]
+      [ cell-death ]
+    ]
+  reset-ticks
+end
 
-  ask turtles [
-    ;; Children within circle are blue, outside are red.
-    update-color self
-  ]
+to cell-birth
+  set living? true
+  set pcolor fgcolor
+end
 
+to cell-death
+  set living? false
+  set pcolor bgcolor
+end
+
+to go
+  ask patches
+    [ set live-neighbors count neighbors with [living?] ]
+  ;; Starting a new "ask patches" here ensures that all the patches
+  ;; finish executing the first ask before any of them start executing
+  ;; the second ask.  This keeps all the patches in synch with each other,
+  ;; so the births and deaths at each generation all happen in lockstep.
+  ask patches
+    [ ifelse live-neighbors = 3
+      [ cell-birth ]
+      [ if live-neighbors != 2
+        [ cell-death ] ] ]
+
+  tick
+end
+
+to draw-cells
+  let erasing? [living?] of patch mouse-xcor mouse-ycor
+  while [mouse-down?]
+    [ ask patch mouse-xcor mouse-ycor
+      [ ifelse erasing?
+        [ cell-death ]
+        [ cell-birth ] ]
+      display ]
 end
 
 
-;; A single iteration. Turtles turn randomly then move forward 1.
-to go-once
-
-  ask turtles [
-    ;lt random-float 180
-    rt random-float 360
-    fd 1
-
-    update-color self
-  ]
-
-end
-
-
-;; Procedure with one argument to update the color of a child turtle.
-to update-color [child]
-    ;; ******* YOUR CODE GOES HERE ******** ;;
-    ;
-    ; Your code should calculate the distance from the center
-    ; of the playground. If the child (a turtle) is less than
-    ; max-pxcor + 0.5 away from the center, they are within the
-    ; circle, and they should be colored blue. Otherwise, the children
-    ; are colored some other color of your choice.
-    ;
-    ; Use the NetLogo procedure distancexy for calculating distance. Use
-    ; ifelse for checking if a child is within a circle. Use "set color blue",
-    ; for example, to set the color to blue.
-    ; Search online for available colors if you don't want green for the
-    ; other color.
-    ;
-    ; set color green
-  ifelse (distancexy 0 0 < max-pxcor + 0.5)
-    [ set color blue ]
-    [ set color white ]
-end
-
-
-to-report calculate-π
-  let num-children-in count turtles with [color = blue]
-  let area-ratio-approx num-children-in / num-children
-  report 4 * area-ratio-approx
-end
-
-
-to-report calculation-error
-  report pi - calculate-π
-end
+; Copyright 1998 Uri Wilensky.
+; See Info tab for full copyright and license.
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+285
 10
-647
-448
+697
+423
 -1
 -1
-13.0
+4.0
 1
 10
 1
@@ -115,90 +89,72 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
-0
-0
+-50
+50
+-50
+50
+1
+1
 1
 ticks
-30.0
+15.0
 
-BUTTON
-24
-55
-186
-88
-NIL
-go-once
-NIL
-1
-T
-OBSERVER
-NIL
-O
-NIL
-NIL
-1
-
-BUTTON
-26
-103
-187
-136
-NIL
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-S
-NIL
-NIL
-1
-
-INPUTBOX
-25
-181
-192
-247
-num-children
+SLIDER
+120
+67
+276
+100
+initial-density
+initial-density
+0.0
 100.0
+35.0
+0.1
 1
-0
-Number
-
-MONITOR
-676
-112
-869
-177
-Approximation of π
-calculate-π
-8
-1
-16
-
-MONITOR
-676
-196
-882
-265
-Approximation error
-calculation-error
-17
-1
-17
+%
+HORIZONTAL
 
 BUTTON
-24
-10
-185
-43
-go
+11
+68
+113
+101
+NIL
+setup-random
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+11
+204
+114
+242
 go-once
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+0
+
+BUTTON
+122
+204
+225
+242
+go-forever
+go
 T
 1
 T
@@ -207,44 +163,241 @@ NIL
 G
 NIL
 NIL
+0
+
+BUTTON
+178
+276
+274
+309
+recolor
+ifelse living?\n  [ set pcolor fgcolor ]\n  [ set pcolor bgcolor ]
+NIL
 1
+T
+PATCH
+NIL
+NIL
+NIL
+NIL
+0
+
+MONITOR
+12
+248
+115
+293
+current density
+count patches with\n  [living?]\n/ count patches
+2
+1
+11
+
+BUTTON
+11
+32
+113
+65
+NIL
+setup-blank
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+TEXTBOX
+124
+125
+283
+193
+When this button is down,\nyou can add or remove\ncells by holding down\nthe mouse button\nand \"drawing\".
+11
+0.0
+0
+
+BUTTON
+9
+134
+112
+169
+NIL
+draw-cells
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+INPUTBOX
+119
+309
+274
+369
+fgcolor
+123.0
+1
+0
+Color
+
+INPUTBOX
+119
+371
+274
+431
+bgcolor
+79.0
+1
+0
+Color
+
+BUTTON
+747
+40
+842
+73
+NIL
+setup-line
+NIL
+1
+T
+OBSERVER
+NIL
+L
+NIL
+NIL
+1
+
+INPUTBOX
+750
+91
+899
+151
+line-length
+57.0
+1
+0
+Number
 
 @#$#@#$#@
 ## WHAT IS IT?
 
-(a general understanding of what the model is trying to show or explain)
+This program is an example of a two-dimensional cellular automaton.  This particular cellular automaton is called The Game of Life.
+
+A cellular automaton is a computational machine that performs actions based on certain rules.  It can be thought of as a board which is divided into cells (such as square cells of a checkerboard).  Each cell can be either "alive" or "dead."  This is called the "state" of the cell.  According to specified rules, each cell will be alive or dead at the next time step.
 
 ## HOW IT WORKS
 
-(what rules the agents use to create the overall behavior of the model)
+The rules of the game are as follows.  Each cell checks the state of itself and its eight surrounding neighbors and then sets itself to either alive or dead.  If there are less than two alive neighbors, then the cell dies.  If there are more than three alive neighbors, the cell dies.  If there are 2 alive neighbors, the cell remains in the state it is in.  If there are exactly three alive neighbors, the cell becomes alive. This is done in parallel and continues forever.
+
+There are certain recurring shapes in Life, for example, the "glider" and the "blinker". The glider is composed of 5 cells which form a small arrow-headed shape, like this:
+
+```text
+   O
+    O
+  OOO
+```
+
+This glider will wiggle across the world, retaining its shape.  A blinker is a block of three cells (either up and down or left and right) that rotates between horizontal and vertical orientations.
 
 ## HOW TO USE IT
 
-(how to use the model, including a description of each of the items in the Interface tab)
+The INITIAL-DENSITY slider determines the initial density of cells that are alive.  SETUP-RANDOM places these cells.  GO-FOREVER runs the rule forever.  GO-ONCE runs the rule once.
+
+If you want to draw your own pattern, use the DRAW-CELLS button and then use the mouse to "draw" and "erase" in the view.
 
 ## THINGS TO NOTICE
 
-(suggested things for the user to notice while running the model)
+Find some objects that are alive, but motionless.
+
+Is there a "critical density" - one at which all change and motion stops/eternal motion begins?
 
 ## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
+Are there any recurring shapes other than gliders and blinkers?
+
+Build some objects that don't die (using DRAW-CELLS)
+
+How much life can the board hold and still remain motionless and unchanging? (use DRAW-CELLS)
+
+The glider gun is a large conglomeration of cells that repeatedly spits out gliders.  Find a "glider gun" (very, very difficult!).
 
 ## EXTENDING THE MODEL
 
-(suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
+Give some different rules to life and see what happens.
+
+Experiment with using neighbors4 instead of neighbors (see below).
 
 ## NETLOGO FEATURES
 
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
+The neighbors primitive returns the agentset of the patches to the north, south, east, west, northeast, northwest, southeast, and southwest.  So `count neighbors with [living?]` counts how many of those eight patches have the `living?` patch variable set to true.
+
+`neighbors4` is like `neighbors` but only uses the patches to the north, south, east, and west.  Some cellular automata, like this one, are defined using the 8-neighbors rule, others the 4-neighbors.
 
 ## RELATED MODELS
 
-(models in the NetLogo Models Library and elsewhere which are of related interest)
+Life Turtle-Based --- same as this, but implemented using turtles instead of patches, for a more attractive display
+CA 1D Elementary --- a model that shows all 256 possible simple 1D cellular automata
+CA 1D Totalistic --- a model that shows all 2,187 possible 1D 3-color totalistic cellular automata
+CA 1D Rule 30 --- the basic rule 30 model
+CA 1D Rule 30 Turtle --- the basic rule 30 model implemented using turtles
+CA 1D Rule 90 --- the basic rule 90 model
+CA 1D Rule 110 --- the basic rule 110 model
+CA 1D Rule 250 --- the basic rule 250 model
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+The Game of Life was invented by John Horton Conway.
+
+See also:
+
+Von Neumann, J. and Burks, A. W., Eds, 1966. Theory of Self-Reproducing Automata. University of Illinois Press, Champaign, IL.
+
+"LifeLine: A Quarterly Newsletter for Enthusiasts of John Conway's Game of Life", nos. 1-11, 1971-1973.
+
+Martin Gardner, "Mathematical Games: The fantastic combinations of John Conway's new solitaire game `life',", Scientific American, October, 1970, pp. 120-123.
+
+Martin Gardner, "Mathematical Games: On cellular automata, self-reproduction, the Garden of Eden, and the game `life',", Scientific American, February, 1971, pp. 112-117.
+
+Berlekamp, Conway, and Guy, Winning Ways for your Mathematical Plays, Academic Press: New York, 1982.
+
+William Poundstone, The Recursive Universe, William Morrow: New York, 1985.
+
+## HOW TO CITE
+
+If you mention this model or the NetLogo software in a publication, we ask that you include the citations below.
+
+For the model itself:
+
+* Wilensky, U. (1998).  NetLogo Life model.  http://ccl.northwestern.edu/netlogo/models/Life.  Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+
+Please cite the NetLogo software as:
+
+* Wilensky, U. (1999). NetLogo. http://ccl.northwestern.edu/netlogo/. Center for Connected Learning and Computer-Based Modeling, Northwestern University, Evanston, IL.
+
+## COPYRIGHT AND LICENSE
+
+Copyright 1998 Uri Wilensky.
+
+![CC BY-NC-SA 3.0](http://ccl.northwestern.edu/images/creativecommons/byncsa.png)
+
+This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 License.  To view a copy of this license, visit https://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to Creative Commons, 559 Nathan Abbott Way, Stanford, California 94305, USA.
+
+Commercial licenses are also available. To inquire about commercial licenses, please contact Uri Wilensky at uri@northwestern.edu.
+
+This model was created as part of the project: CONNECTED MATHEMATICS: MAKING SENSE OF COMPLEX PHENOMENA THROUGH BUILDING OBJECT-BASED PARALLEL MODELS (OBPML).  The project gratefully acknowledges the support of the National Science Foundation (Applications of Advanced Technologies Program) -- grant numbers RED #9552950 and REC #9632612.
+
+This model was converted to NetLogo as part of the projects: PARTICIPATORY SIMULATIONS: NETWORK-BASED DESIGN FOR SYSTEMS LEARNING IN CLASSROOMS and/or INTEGRATED SIMULATION AND MODELING ENVIRONMENT. The project gratefully acknowledges the support of the National Science Foundation (REPP & ROLE programs) -- grant numbers REC #9814682 and REC-0126227. Converted from StarLogoT to NetLogo, 2001.
+
+<!-- 1998 2001 -->
 @#$#@#$#@
 default
 true
@@ -438,22 +591,6 @@ Polygon -7500403 true true 135 105 90 60 45 45 75 105 135 135
 Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
-sheep
-false
-15
-Circle -1 true true 203 65 88
-Circle -1 true true 70 65 162
-Circle -1 true true 150 105 120
-Polygon -7500403 true false 218 120 240 165 255 165 278 120
-Circle -7500403 true false 214 72 67
-Rectangle -1 true true 164 223 179 298
-Polygon -1 true true 45 285 30 285 30 240 15 195 45 210
-Circle -1 true true 3 83 150
-Rectangle -1 true true 65 221 80 296
-Polygon -1 true true 195 285 210 285 210 240 240 210 195 210
-Polygon -7500403 true false 276 85 285 105 302 99 294 83
-Polygon -7500403 true false 219 85 210 105 193 99 201 83
-
 square
 false
 0
@@ -538,13 +675,6 @@ Line -7500403 true 40 84 269 221
 Line -7500403 true 40 216 269 79
 Line -7500403 true 84 40 221 269
 
-wolf
-false
-0
-Polygon -16777216 true false 253 133 245 131 245 133
-Polygon -7500403 true true 2 194 13 197 30 191 38 193 38 205 20 226 20 257 27 265 38 266 40 260 31 253 31 230 60 206 68 198 75 209 66 228 65 243 82 261 84 268 100 267 103 261 77 239 79 231 100 207 98 196 119 201 143 202 160 195 166 210 172 213 173 238 167 251 160 248 154 265 169 264 178 247 186 240 198 260 200 271 217 271 219 262 207 258 195 230 192 198 210 184 227 164 242 144 259 145 284 151 277 141 293 140 299 134 297 127 273 119 270 105
-Polygon -7500403 true true -1 195 14 180 36 166 40 153 53 140 82 131 134 133 159 126 188 115 227 108 236 102 238 98 268 86 269 92 281 87 269 103 269 113
-
 x
 false
 0
@@ -553,6 +683,7 @@ Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
 NetLogo 6.0
 @#$#@#$#@
+setup-random repeat 20 [ go ]
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

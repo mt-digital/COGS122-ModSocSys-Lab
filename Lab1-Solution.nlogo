@@ -54,8 +54,8 @@ end
 to go-once
 
   ask turtles [
-    ;lt random-float 180
-    rt random-float 360
+    lt random-float 180
+    rt random-float 180
     fd 1
 
     update-color self
@@ -64,26 +64,22 @@ to go-once
 end
 
 
-;; Procedure with one argument to update the color of a child turtle.
 to update-color [child]
-    ;; ******* YOUR CODE GOES HERE ******** ;;
-    ;
-    ; Your code should calculate the distance from the center
-    ; of the playground. If the child (a turtle) is less than
-    ; max-pxcor + 0.5 away from the center, they are within the
-    ; circle, and they should be colored blue. Otherwise, the children
-    ; are colored some other color of your choice.
-    ;
-    ; Use the NetLogo procedure distancexy for calculating distance. Use
-    ; ifelse for checking if a child is within a circle. Use "set color blue",
-    ; for example, to set the color to blue.
-    ; Search online for available colors if you don't want green for the
-    ; other color.
-    ;
-    ; set color green
-  ifelse (distancexy 0 0 < max-pxcor + 0.5)
-    [ set color blue ]
-    [ set color white ]
+
+  ;; Update color based on distance.
+  let dist-from-origin (distancexy 0 0)
+  let radius max-pxcor + 0.5
+
+  ;; See if the turtle is inside the circle.
+  let within-circle? (dist-from-origin < radius)
+
+  ;; Update color: blue if within circle, red if outside.
+  ifelse within-circle? [
+    set color blue
+  ] [
+    set color white
+  ]
+
 end
 
 
@@ -165,7 +161,7 @@ INPUTBOX
 192
 247
 num-children
-100.0
+10.0
 1
 0
 Number
