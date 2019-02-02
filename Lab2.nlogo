@@ -19,17 +19,11 @@ to setup-random
 end
 
 to setup-line
-  clear-all
-
-  let lower-ycor (- round(line-length / 2.0))
-  let upper-ycor (lower-ycor + line-length)
-
-  ask patches
-    [ ifelse (pxcor = 0 and lower-ycor <= pycor and pycor < upper-ycor)
-      [ cell-birth ]
-      [ cell-death ]
-    ]
-  reset-ticks
+  ;; ****************** YOUR CODE GOES HERE ******************
+  ;
+  ; Instr. #1
+  ;
+  ; Instr. #2
 end
 
 to cell-birth
