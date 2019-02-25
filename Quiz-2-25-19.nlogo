@@ -1,3 +1,11 @@
+;;
+; Quiz-2-25-19.nlogo
+;
+; Contains example code inspired by questions on a lab-section practice quiz given
+; 2/25/19.
+;
+; Author: Matthew A. Turner <maturner01@gmail.com>
+
 globals [
   max-xcor
 
