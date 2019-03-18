@@ -1,156 +1,64 @@
-;;
-; Example NetLogo code for HW 5. Adapt these examples
-; to answer problems from COGS 122 S19 HW5.
-;
-; Author: Matthew A. Turner <mturner8@ucmerced.edu>
-; Date: 2019-02-27
-;
+extensions [nw]
 
+; Generate a new example network for degree and clustering coefficient
+; examples and their distributions.
+to New-Example-Network
 
-; Create general and soldiers breeds.
-breed [generals general]  ; There will only be one general.
-breed [soldiers soldier]
-
-globals [ stop-simulation? ]
-
-
-;; *************
-;; Randomly-colored neighborhood squares (for Question #1)
-;; *************
-to setup-world
   clear-all
+
+  setup
+
+  ; Create some links stochastically.
+  ask turtles
+  [
+    ; Select half the population of other nodes to link to.
+    repeat (n-nodes / 3.0) [
+
+      ; Select one other turtle to link to.
+      let random-other (one-of other turtles)
+
+      ; Don't re-link turtles. No further sophistication needed for this simple examle.
+      if not (link-neighbor? random-other)
+      [
+        create-link-with random-other
+      ]
+    ]
+  ]
+
+  ; Layout the network display so it's easier to see who is connected.
+  ; Copy/pasted exactly from http://ccl.northwestern.edu/netlogo/docs/index2.html#layout-tutte
+  repeat 10 [ layout-tutte (turtles with [link-neighbors = 1]) links 12 ]
+
+  ; No ticks, so we update plots manually.
+  update-plots
+end
+
+
+to setup
+  ; I think it's easier to see with white background.
   ask patches
   [
     set pcolor white
   ]
 
-  set stop-simulation? false
-end
-
-
-;;
-; Color a square of size (2 * neighborhood-size) + 1 centered at a
-; random patch.
-;
-to MakeRandomSquare
-
-  ; Re-setup world each time. See above.
-  setup-world
-
-  ; Select a patch at random to build a neighborhood around.
-  ask one-of patches
+  create-turtles n-nodes
   [
-    ; Set the central pcolor to be green.
-    set pcolor 65
-
-    ; Temporarily store the focal patch's coordinates.
-    let thisPx pxcor
-    let thisPy pycor
-    ask other patches
-    [
-      if (in-neighborhood? thisPx thisPy)
-      [
-        set pcolor random-float 120
-      ]
-    ]
+    set size 1.3
+    set color blue + 1.5
+    set shape "circle"
+    set label-color black
+    set label who
   ]
-end
-
-
-;;
-; Reports boolean if a patch (implicitly passed to this function) is within the
-; neighborhood of neighborhood-size of a patch centered at (focalPxcor, focalPycor).
-;
-to-report in-neighborhood? [focalPxcor focalPycor]
-  report (
-    pxcor <= focalPxcor + neighborhood-size and
-    pxcor >= focalPxcor - neighborhood-size and
-    pycor <= focalPycor + neighborhood-size and
-    pycor >= focalPycor - neighborhood-size
-  )
-end
-
-
-;; *************
-;;  THE GENERAL
-;; *************
-to SetupGeneral
-  setup-world
-  reset-ticks
-  create-soldiers n-soldiers
-  [
-    set color green - 3.5
-    setxy random-xcor random-ycor
-  ]
-end
-
-
-to GoGeneral
-  if (stop-simulation?)
-  [ stop ]
-
-  ask soldiers
-  [
-     ; Turn to a random heading.
-     set heading (heading + -45.0 + (random-float 90))
-     ; Move forward a distance between .5 and 1.5,
-     ; turning around if necessary.
-     if (not can-move? 1.0) [ set heading one-of [ 0 90 180 270 ] ]
-
-     fd (1.0 + (random-float 1.0))
-  ]
-
-  tick
-end
-
-
-;;
-; Simulate the arrival of the general.
-;
-to GeneralArrives
-  ; If there is already one general...
-  ifelse (count generals = 1)
-  [
-    print("Already created one general! Not creating a general. Re-setup to re-run.")
-  ]
-  ; ... otherwise create one and ...
-  [
-    create-generals 1
-    [
-      ; ... set him to have entered from the left.
-      setxy 0 (min-pycor + 2.5)
-      ; The General is bigger to represent The General's status.
-      set size 3
-      set color green
-      set heading 0
-      set label "          The General."
-      set label-color black
-    ]
-  ]
-end
-
-
-;;
-; Call soldiers to attention of the General.
-;
-to Attention!
-  ask soldiers
-  [
-    ; We only ever have one general.
-    face one-of generals
-  ]
-
-  set stop-simulation? true
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-455
-17
-921
-484
+210
+10
+613
+414
 -1
 -1
-13.9
+11.97
 1
 10
 1
@@ -170,132 +78,29 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-BUTTON
-221
-432
-315
-465
-NIL
-GeneralArrives
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-218
-482
-311
-515
-NIL
-Attention!
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-TEXTBOX
-75
-285
-379
-420
-Example for HW 5, Q2. The general. Demonstrates the \"face\" NetLogo command. See the procedures of the buttons below in the Code tab and comments for how to use the face command. In this example, the soldiers move around randomly until The General arrives. After The General arrives you can call the soldiers to attention, and they will stop moving and \"face\" The General.\n
-11
-0.0
-1
-
-BUTTON
-110
-442
-210
-510
-NIL
-SetupGeneral
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-TEXTBOX
-148
-41
-298
-139
-Example for HW 5, Q1. This will color a square of given neighborhood-size centered on a random patch. The center point is bright green so it's easy to find.
-11
-0.0
-1
-
-BUTTON
-138
-148
-309
-181
-NIL
-MakeRandomSquare
-NIL
-1
-T
-OBSERVER
-NIL
-S
-NIL
-NIL
-1
-
 SLIDER
-137
-191
-310
-224
-neighborhood-size
-neighborhood-size
-1
+21
+68
+194
+101
+n-nodes
+n-nodes
 3
-1.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-126
-529
-298
-562
-n-soldiers
-n-soldiers
-0
-40
-4.0
+8
+7.0
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-320
-455
-416
-488
+20
+116
+194
+150
 NIL
-GoGeneral
-T
+New-Example-Network
+NIL
 1
 T
 OBSERVER
@@ -304,6 +109,42 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+648
+13
+848
+163
+Degree distribution
+Degree
+Number of turtles
+0.0
+7.0
+0.0
+7.0
+true
+false
+"" ""
+PENS
+"default" 1.0 1 -16777216 true "" "histogram [count link-neighbors] of turtles"
+
+PLOT
+649
+210
+849
+360
+Clustering coeff. distribution
+Clustering Coefficient
+Number of turtles
+0.0
+1.0
+0.0
+5.0
+true
+false
+"" ""
+PENS
+"default" 0.1 1 -16777216 true "" "histogram [ nw:clustering-coefficient ] of turtles"
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -647,7 +488,7 @@ false
 Polygon -7500403 true true 270 75 225 30 30 225 75 270
 Polygon -7500403 true true 30 75 75 30 270 225 225 270
 @#$#@#$#@
-NetLogo 6.0
+NetLogo 6.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
